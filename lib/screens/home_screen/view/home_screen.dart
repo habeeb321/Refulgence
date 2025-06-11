@@ -14,11 +14,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     // Load products automatically when screen opens
     context.read<HomeBloc>().add(LoadProductsEvent());
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -42,27 +50,70 @@ class _HomeScreenState extends State<HomeScreen> {
 
   _buildBody(Size size) {
     return SafeArea(
-      child: BlocConsumer<HomeBloc, HomeState>(
-        listener: (context, state) {
-          if (state is HomeError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
+      child: Column(
+        children: [
+          _buildSearchField(),
+          Expanded(
+            child: BlocConsumer<HomeBloc, HomeState>(
+              listener: (context, state) {
+                if (state is HomeError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              builder: (context, state) {
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<HomeBloc>().add(LoadProductsEvent());
+                    // Wait for the operation to complete
+                    await Future.delayed(const Duration(milliseconds: 500));
+                  },
+                  child: _buildContent(state, size),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (query) {
+          context.read<HomeBloc>().add(SearchProductsEvent(query));
         },
-        builder: (context, state) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<HomeBloc>().add(LoadProductsEvent());
-              // Wait for the operation to complete
-              await Future.delayed(const Duration(milliseconds: 500));
-            },
-            child: _buildContent(state, size),
-          );
-        },
+        decoration: InputDecoration(
+          hintText: 'Search products...',
+          hintStyle: TextStyle(color: Colors.grey[600]),
+          prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, color: Colors.grey[600]),
+                  onPressed: () {
+                    _searchController.clear();
+                    context.read<HomeBloc>().add(SearchProductsEvent(''));
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
       ),
     );
   }
@@ -81,6 +132,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
       case HomeLoaded():
         return _buildProductsList(state.products);
+
+      case HomeSearchResults():
+        return _buildProductsList(state.filteredProducts);
 
       case HomeError():
         return _buildErrorContent(state.message);
@@ -134,13 +188,38 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         child: SizedBox(
           height: MediaQuery.of(context).size.height * 0.7,
-          child: const Center(
-            child: Text(
-              'No products available',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _searchController.text.isNotEmpty ? Icons.search_off : Icons.inventory_2_outlined,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _searchController.text.isNotEmpty 
+                      ? 'No products found for "${_searchController.text}"'
+                      : 'No products available',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (_searchController.text.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Try searching with different keywords',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ],
             ),
           ),
         ),

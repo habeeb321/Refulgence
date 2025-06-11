@@ -18,3 +18,18 @@ final class HomeError extends HomeState {
 
   HomeError({required this.message});
 }
+
+class HomeSearchResults extends HomeState {
+  final List<ProductsModel> filteredProducts;
+  final List<ProductsModel> allProducts; // Keep reference to all products
+  final String searchQuery;
+
+  HomeSearchResults({
+    required this.filteredProducts,
+    required this.allProducts,
+    required this.searchQuery,
+  });
+
+  @override
+  List<Object> get props => [filteredProducts, allProducts, searchQuery];
+}

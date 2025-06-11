@@ -9,6 +9,7 @@ part 'home_state.dart';
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   HomeBloc() : super(HomeInitial()) {
     on<LoadProductsEvent>(_onLoadProducts);
+    on<SearchProductsEvent>(_onSearchProducts);
   }
 
   Future<void> _onLoadProducts(
@@ -27,5 +28,41 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     } catch (e) {
       emit(HomeError(message: 'Error: ${e.toString()}'));
     }
+  }
+
+  void _onSearchProducts(SearchProductsEvent event, Emitter<HomeState> emit) {
+    final currentState = state;
+
+    // Get all products from current state
+    List<ProductsModel> allProducts = [];
+
+    if (currentState is HomeLoaded) {
+      allProducts = currentState.products ?? [];
+    } else if (currentState is HomeSearchResults) {
+      allProducts = currentState.allProducts;
+    } else {
+      return; // No products loaded yet
+    }
+
+    if (event.query.isEmpty) {
+      // If search query is empty, show all products
+      emit(HomeLoaded(products: allProducts));
+      return;
+    }
+
+    // Filter products based on search query
+    final filteredProducts = allProducts.where((product) {
+      final title = product.title?.toLowerCase() ?? '';
+      final body = product.body?.toLowerCase() ?? '';
+      final query = event.query.toLowerCase();
+
+      return title.contains(query) || body.contains(query);
+    }).toList();
+
+    emit(HomeSearchResults(
+      filteredProducts: filteredProducts,
+      allProducts: allProducts,
+      searchQuery: event.query,
+    ));
   }
 }
