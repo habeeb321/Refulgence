@@ -6,6 +6,9 @@ import 'package:refulgence/core/constants.dart';
 import 'package:refulgence/screens/detail_screen/bloc/detail_bloc.dart';
 import 'package:refulgence/screens/detail_screen/model/comments_model.dart';
 import 'package:refulgence/screens/home_screen/model/products_model.dart';
+import 'package:refulgence/screens/favourites_screen/bloc/favourites_bloc.dart';
+import 'package:refulgence/screens/favourites_screen/bloc/favourites_event.dart';
+import 'package:refulgence/screens/favourites_screen/bloc/favourites_state.dart';
 
 class ReviewModel {
   final String id;
@@ -62,6 +65,7 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
   List<ReviewModel> _reviews = [];
+  bool _isFavourite = false;
 
   @override
   void initState() {
@@ -72,6 +76,7 @@ class _DetailScreenState extends State<DetailScreen> {
           postId: widget.product.id!,
         ));
     _loadReviews();
+    _checkFavouriteStatus();
   }
 
   Future<void> _loadReviews() async {
@@ -98,6 +103,36 @@ class _DetailScreenState extends State<DetailScreen> {
           key: 'reviews_${widget.product.id}', value: reviewsJson);
     } catch (e) {
       print('Error saving reviews: $e');
+    }
+  }
+
+  void _checkFavouriteStatus() {
+    context
+        .read<FavouritesBloc>()
+        .add(CheckIsFavouriteEvent(widget.product.id!));
+  }
+
+  void _toggleFavourite() {
+    if (_isFavourite) {
+      context
+          .read<FavouritesBloc>()
+          .add(RemoveFromFavouritesEvent(widget.product.id!));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Removed from favourites'),
+          backgroundColor: Colors.orange.shade600,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      context.read<FavouritesBloc>().add(AddToFavouritesEvent(widget.product));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Added to favourites'),
+          backgroundColor: Colors.green.shade600,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -239,12 +274,68 @@ class _DetailScreenState extends State<DetailScreen> {
     Size size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: _buildAppbar(size),
-      body: _buildBody(size),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddReviewDialog,
-        icon: const Icon(Icons.rate_review),
-        label: const Text('Add Review'),
-        backgroundColor: Colors.blue.shade600,
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<DetailBloc, DetailState>(
+            listener: (context, state) {
+              if (state is DetailError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+          BlocListener<FavouritesBloc, FavouritesState>(
+            listener: (context, state) {
+              if (state is FavouriteStatusUpdated) {
+                if (state.productId == widget.product.id) {
+                  setState(() {
+                    _isFavourite = state.isFavourite;
+                  });
+                }
+              } else if (state is FavouritesLoaded) {
+                setState(() {
+                  _isFavourite =
+                      state.favouriteStatus[widget.product.id] ?? false;
+                });
+              } else if (state is FavouritesError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+        child: _buildBody(size),
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: _toggleFavourite,
+            heroTag: "favourite_fab",
+            backgroundColor:
+                _isFavourite ? Colors.red.shade600 : Colors.grey.shade400,
+            child: Icon(
+              _isFavourite ? Icons.favorite : Icons.favorite_border,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton.extended(
+            onPressed: _showAddReviewDialog,
+            heroTag: "review_fab",
+            icon: const Icon(Icons.rate_review),
+            label: const Text('Add Review'),
+            backgroundColor: Colors.blue.shade600,
+          ),
+        ],
       ),
     );
   }
@@ -257,21 +348,27 @@ class _DetailScreenState extends State<DetailScreen> {
         style: Constants.appBarTitleStyle(size),
       ),
       elevation: 0,
+      actions: [
+        BlocBuilder<FavouritesBloc, FavouritesState>(
+          builder: (context, state) {
+            return IconButton(
+              onPressed: _toggleFavourite,
+              icon: Icon(
+                _isFavourite ? Icons.favorite : Icons.favorite_border,
+                color:
+                    _isFavourite ? Colors.red.shade600 : Colors.grey.shade600,
+              ),
+              tooltip:
+                  _isFavourite ? 'Remove from favourites' : 'Add to favourites',
+            );
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildBody(Size size) {
-    return BlocConsumer<DetailBloc, DetailState>(
-      listener: (context, state) {
-        if (state is DetailError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      },
+    return BlocBuilder<DetailBloc, DetailState>(
       builder: (context, state) {
         return RefreshIndicator(
           onRefresh: () async {
@@ -280,6 +377,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   postId: widget.product.id!,
                 ));
             await _loadReviews();
+            _checkFavouriteStatus();
             await Future.delayed(const Duration(milliseconds: 500));
           },
           child: _buildContent(state, size),
@@ -334,7 +432,7 @@ class _DetailScreenState extends State<DetailScreen> {
             const SizedBox(height: 24),
           ],
           _buildCommentsSection(state.comments),
-          const SizedBox(height: 80), // Add space for FAB
+          const SizedBox(height: 120), // Add space for FABs
         ],
       ),
     );
@@ -432,6 +530,45 @@ class _DetailScreenState extends State<DetailScreen> {
                           fontSize: 12,
                           color: Colors.blue.shade600,
                           fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Favourite status indicator
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _isFavourite
+                        ? Colors.red.shade50
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _isFavourite
+                          ? Colors.red.shade200
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _isFavourite ? Icons.favorite : Icons.favorite_border,
+                        size: 16,
+                        color: _isFavourite
+                            ? Colors.red.shade600
+                            : Colors.grey.shade600,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _isFavourite ? 'Favourite' : 'Not Favourite',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _isFavourite
+                              ? Colors.red.shade600
+                              : Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
