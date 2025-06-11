@@ -342,6 +342,12 @@ class _DetailScreenState extends State<DetailScreen> {
 
   AppBar _buildAppbar(Size size) {
     return AppBar(
+      leading: IconButton(
+          onPressed: () {
+            context.read<FavouritesBloc>().add(LoadFavouritesEvent());
+            Navigator.pop(context);
+          },
+          icon: const Icon(Icons.arrow_back)),
       centerTitle: true,
       title: Text(
         'Product Details',

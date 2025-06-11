@@ -7,26 +7,15 @@ import 'package:refulgence/screens/favourites_screen/bloc/favourites_event.dart'
 import 'package:refulgence/screens/favourites_screen/bloc/favourites_state.dart';
 import 'package:refulgence/screens/home_screen/model/products_model.dart';
 
-class FavouritesScreen extends StatefulWidget {
+class FavouritesScreen extends StatelessWidget {
   const FavouritesScreen({super.key});
-
-  @override
-  State<FavouritesScreen> createState() => _FavouritesScreenState();
-}
-
-class _FavouritesScreenState extends State<FavouritesScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<FavouritesBloc>().add(LoadFavouritesEvent());
-  }
 
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: _buildAppBar(size),
-      body: _buildBody(),
+      body: _buildBody(context),
     );
   }
 
@@ -37,13 +26,11 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
         'My Favourites',
         style: Constants.appBarTitleStyle(size),
       ),
-      elevation: 0,
-      backgroundColor: Colors.red.shade50,
-      foregroundColor: Colors.red.shade700,
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
+    context.read<FavouritesBloc>().add(LoadFavouritesEvent());
     return BlocConsumer<FavouritesBloc, FavouritesState>(
       listener: (context, state) {
         if (state is FavouritesError) {
@@ -61,13 +48,13 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
             context.read<FavouritesBloc>().add(LoadFavouritesEvent());
             await Future.delayed(const Duration(milliseconds: 500));
           },
-          child: _buildContent(state),
+          child: _buildContent(state, context),
         );
       },
     );
   }
 
-  Widget _buildContent(FavouritesState state) {
+  Widget _buildContent(FavouritesState state, BuildContext context) {
     switch (state.runtimeType) {
       case FavouritesInitial:
       case FavouritesLoading:
@@ -79,7 +66,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
 
       case FavouritesError:
         final errorState = state as FavouritesError;
-        return _buildErrorContent(errorState.message);
+        return _buildErrorContent(errorState.message, context);
 
       default:
         return const SizedBox.shrink();
@@ -96,7 +83,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
       itemCount: favourites.length,
       itemBuilder: (context, index) {
         final product = favourites[index];
-        return _buildFavouriteCard(product);
+        return _buildFavouriteCard(product, context);
       },
     );
   }
@@ -130,26 +117,12 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.shopping_bag),
-            label: const Text('Browse Products'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildFavouriteCard(ProductsModel product) {
+  Widget _buildFavouriteCard(ProductsModel product, BuildContext context) {
     return Card(
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 16),
@@ -224,6 +197,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
                       context.read<FavouritesBloc>().add(
                             RemoveFromFavouritesEvent(product.id!),
                           );
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: const Text('Removed from favourites'),
@@ -293,7 +267,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
     );
   }
 
-  Widget _buildErrorContent(String message) {
+  Widget _buildErrorContent(String message, BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
