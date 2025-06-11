@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:refulgence/core/constants.dart';
-import 'package:refulgence/screens/detail_screen/bloc/detail_bloc.dart';
+import 'package:refulgence/screens/detail_screen/controller/detail_bloc.dart';
 import 'package:refulgence/screens/detail_screen/view/detail_screen.dart';
 import 'package:refulgence/screens/home_screen/controller/home_bloc.dart';
 import 'package:refulgence/screens/home_screen/model/products_model.dart';
@@ -19,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Load products automatically when screen opens
+
     context.read<HomeBloc>().add(LoadProductsEvent());
   }
 
@@ -69,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 return RefreshIndicator(
                   onRefresh: () async {
                     context.read<HomeBloc>().add(LoadProductsEvent());
-                    // Wait for the operation to complete
+
                     await Future.delayed(const Duration(milliseconds: 500));
                   },
                   child: _buildContent(state, size),
@@ -193,13 +193,15 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  _searchController.text.isNotEmpty ? Icons.search_off : Icons.inventory_2_outlined,
+                  _searchController.text.isNotEmpty
+                      ? Icons.search_off
+                      : Icons.inventory_2_outlined,
                   size: 64,
                   color: Colors.grey,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _searchController.text.isNotEmpty 
+                  _searchController.text.isNotEmpty
                       ? 'No products found for "${_searchController.text}"'
                       : 'No products available',
                   style: const TextStyle(

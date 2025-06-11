@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:refulgence/core/constants.dart';
 import 'package:refulgence/screens/detail_screen/view/detail_screen.dart';
-import 'package:refulgence/screens/favourites_screen/bloc/favourites_bloc.dart';
-import 'package:refulgence/screens/favourites_screen/bloc/favourites_event.dart';
-import 'package:refulgence/screens/favourites_screen/bloc/favourites_state.dart';
+import 'package:refulgence/screens/favourites_screen/controller/favourites_bloc.dart';
+import 'package:refulgence/screens/favourites_screen/controller/favourites_event.dart';
+import 'package:refulgence/screens/favourites_screen/controller/favourites_state.dart';
 import 'package:refulgence/screens/home_screen/model/products_model.dart';
 
 class FavouritesScreen extends StatelessWidget {

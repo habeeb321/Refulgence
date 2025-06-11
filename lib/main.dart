@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:refulgence/core/app_theme.dart';
 import 'package:refulgence/screens/bottom_navigation/view/bottom_navigation.dart';
-import 'package:refulgence/screens/detail_screen/bloc/detail_bloc.dart';
-import 'package:refulgence/screens/favourites_screen/bloc/favourites_bloc.dart';
+import 'package:refulgence/screens/detail_screen/controller/detail_bloc.dart';
+import 'package:refulgence/screens/favourites_screen/controller/favourites_bloc.dart';
 import 'package:refulgence/screens/favourites_screen/repository/favourites_repository.dart';
 import 'package:refulgence/screens/home_screen/controller/home_bloc.dart';
 

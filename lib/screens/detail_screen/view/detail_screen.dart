@@ -3,52 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:refulgence/core/constants.dart';
-import 'package:refulgence/screens/detail_screen/bloc/detail_bloc.dart';
+import 'package:refulgence/screens/detail_screen/controller/detail_bloc.dart';
 import 'package:refulgence/screens/detail_screen/model/comments_model.dart';
+import 'package:refulgence/screens/detail_screen/model/review_model.dart';
 import 'package:refulgence/screens/home_screen/model/products_model.dart';
-import 'package:refulgence/screens/favourites_screen/bloc/favourites_bloc.dart';
-import 'package:refulgence/screens/favourites_screen/bloc/favourites_event.dart';
-import 'package:refulgence/screens/favourites_screen/bloc/favourites_state.dart';
-
-class ReviewModel {
-  final String id;
-  final String name;
-  final String email;
-  final String body;
-  final double rating;
-  final DateTime createdAt;
-
-  ReviewModel({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.body,
-    required this.rating,
-    required this.createdAt,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'email': email,
-      'body': body,
-      'rating': rating,
-      'createdAt': createdAt.toIso8601String(),
-    };
-  }
-
-  factory ReviewModel.fromJson(Map<String, dynamic> json) {
-    return ReviewModel(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      body: json['body'],
-      rating: json['rating'].toDouble(),
-      createdAt: DateTime.parse(json['createdAt']),
-    );
-  }
-}
+import 'package:refulgence/screens/favourites_screen/controller/favourites_bloc.dart';
+import 'package:refulgence/screens/favourites_screen/controller/favourites_event.dart';
+import 'package:refulgence/screens/favourites_screen/controller/favourites_state.dart';
 
 class DetailScreen extends StatefulWidget {
   final ProductsModel product;
@@ -70,7 +31,7 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Load comments automatically when screen opens
+
     context.read<DetailBloc>().add(LoadCommentsEvent(
           product: widget.product,
           postId: widget.product.id!,
@@ -256,7 +217,7 @@ class _DetailScreenState extends State<DetailScreen> {
     );
 
     setState(() {
-      _reviews.insert(0, newReview); // Add to beginning of list
+      _reviews.insert(0, newReview);
     });
 
     _saveReviews();
@@ -438,7 +399,7 @@ class _DetailScreenState extends State<DetailScreen> {
             const SizedBox(height: 24),
           ],
           _buildCommentsSection(state.comments),
-          const SizedBox(height: 120), // Add space for FABs
+          const SizedBox(height: 120),
         ],
       ),
     );
@@ -541,7 +502,6 @@ class _DetailScreenState extends State<DetailScreen> {
                     ],
                   ),
                 ),
-                // Favourite status indicator
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

@@ -33,7 +33,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   void _onSearchProducts(SearchProductsEvent event, Emitter<HomeState> emit) {
     final currentState = state;
 
-    // Get all products from current state
     List<ProductsModel> allProducts = [];
 
     if (currentState is HomeLoaded) {
@@ -41,16 +40,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     } else if (currentState is HomeSearchResults) {
       allProducts = currentState.allProducts;
     } else {
-      return; // No products loaded yet
+      return;
     }
 
     if (event.query.isEmpty) {
-      // If search query is empty, show all products
       emit(HomeLoaded(products: allProducts));
       return;
     }
 
-    // Filter products based on search query
     final filteredProducts = allProducts.where((product) {
       final title = product.title?.toLowerCase() ?? '';
       final body = product.body?.toLowerCase() ?? '';

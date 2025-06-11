@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:refulgence/screens/favourites_screen/bloc/favourites_event.dart';
-import 'package:refulgence/screens/favourites_screen/bloc/favourites_state.dart';
+import 'package:refulgence/screens/favourites_screen/controller/favourites_event.dart';
+import 'package:refulgence/screens/favourites_screen/controller/favourites_state.dart';
 import 'package:refulgence/screens/favourites_screen/repository/favourites_repository.dart';
 import 'package:refulgence/screens/home_screen/model/products_model.dart';
 

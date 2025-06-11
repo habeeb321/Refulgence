@@ -21,7 +21,7 @@ final class HomeError extends HomeState {
 
 class HomeSearchResults extends HomeState {
   final List<ProductsModel> filteredProducts;
-  final List<ProductsModel> allProducts; // Keep reference to all products
+  final List<ProductsModel> allProducts;
   final String searchQuery;
 
   HomeSearchResults({
