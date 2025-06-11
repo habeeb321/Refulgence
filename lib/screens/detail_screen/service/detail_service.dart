@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:refulgence/core/app_config.dart';
 import 'package:refulgence/core/constants.dart';
-import 'package:refulgence/screens/home_screen/model/products_model.dart';
+import 'package:refulgence/screens/detail_screen/model/comments_model.dart';
 
-class HomeService {
+class DetailService {
   static final Dio dio = Dio();
 
-  static Future<List<ProductsModel>?> getProducts() async {
+  static Future<List<CommentsModel>?> getComments() async {
     try {
-      Response response = await dio.get('${AppConfig.baseUrl}/posts');
+      Response response = await dio.get('${AppConfig.baseUrl}/comments');
 
       if (response.statusCode == 200 && response.data != null) {
         Constants.logger.i('Success: ${response.data}');
@@ -26,12 +26,12 @@ class HomeService {
           return null;
         }
 
-        return data.map((item) => ProductsModel.fromJson(item)).toList();
+        return data.map((item) => CommentsModel.fromJson(item)).toList();
       } else {
         Constants.logger.e('HTTP Error: Status code ${response.statusCode}');
       }
     } catch (e) {
-      Constants.logger.e('getProducts Error : $e');
+      Constants.logger.e('getComments Error : $e');
     }
     return null;
   }
